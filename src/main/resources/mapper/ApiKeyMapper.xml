@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.ApiKeyMapper">
+
+    <resultMap id="ApiKeyResultMap" type="com.aihedgefund.model.DO.ApiKeyDO">
+        <id property="id" column="id"/>
+        <result property="provider" column="provider"/>
+        <result property="keyValue" column="key_value"/>
+        <result property="isActive" column="is_active"/>
+        <result property="description" column="description"/>
+        <result property="lastUsed" column="last_used"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectAll" resultMap="ApiKeyResultMap">
+        SELECT id, provider, key_value, is_active, description, last_used, created_at, updated_at
+        FROM api_keys
+        ORDER BY provider
+    </select>
+
+    <select id="selectByProvider" resultMap="ApiKeyResultMap">
+        SELECT id, provider, key_value, is_active, description, last_used, created_at, updated_at
+        FROM api_keys
+        WHERE provider = #{provider}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO api_keys (provider, key_value, is_active, description)
+        VALUES (#{provider}, #{keyValue}, #{isActive}, #{description})
+    </insert>
+
+    <update id="updateByProvider">
+        UPDATE api_keys
+        SET key_value   = #{keyValue},
+            is_active   = #{isActive},
+            description = #{description},
+            updated_at  = datetime('now')
+        WHERE provider = #{provider}
+    </update>
+
+    <delete id="deleteByProvider">
+        DELETE FROM api_keys WHERE provider = #{provider}
+    </delete>
+
+</mapper>

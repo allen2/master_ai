@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.UserWalletMapper">
+
+    <resultMap id="walletMap" type="com.aihedgefund.model.DO.UserWalletDO">
+        <id     property="id"        column="id"/>
+        <result property="userId"    column="user_id"/>
+        <result property="balance"   column="balance"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByUserId" resultMap="walletMap">
+        SELECT id, user_id, balance, created_at, updated_at
+        FROM user_wallets
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_wallets (user_id, balance, created_at, updated_at)
+        VALUES (#{userId}, #{balance}, datetime('now'), datetime('now'))
+    </insert>
+
+    <!-- 原子扣减：余额 >= 1 才更新，防止超支 -->
+    <update id="deductOne">
+        UPDATE user_wallets
+        SET balance    = balance - 1,
+            updated_at = datetime('now')
+        WHERE user_id = #{userId}
+          AND balance >= 1
+    </update>
+
+    <update id="addBalance">
+        UPDATE user_wallets
+        SET balance    = balance + #{amount},
+            updated_at = datetime('now')
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

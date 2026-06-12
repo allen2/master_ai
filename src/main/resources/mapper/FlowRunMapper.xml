@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.FlowRunMapper">
+
+    <resultMap id="FlowRunResultMap" type="com.aihedgefund.model.DO.FlowRunDO">
+        <id property="id" column="id"/>
+        <result property="flowId" column="flow_id"/>
+        <result property="status" column="status"/>
+        <result property="tradingMode" column="trading_mode"/>
+        <result property="schedule" column="schedule"/>
+        <result property="duration" column="duration"/>
+        <result property="requestData" column="request_data"/>
+        <result property="initialPortfolio" column="initial_portfolio"/>
+        <result property="finalPortfolio" column="final_portfolio"/>
+        <result property="results" column="results"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="runNumber" column="run_number"/>
+        <result property="startedAt" column="started_at"/>
+        <result property="completedAt" column="completed_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByFlowId" resultMap="FlowRunResultMap">
+        SELECT * FROM hedge_fund_flow_runs WHERE flow_id = #{flowId} ORDER BY run_number DESC
+    </select>
+
+    <select id="selectById" resultMap="FlowRunResultMap">
+        SELECT * FROM hedge_fund_flow_runs WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO hedge_fund_flow_runs
+            (flow_id, status, trading_mode, schedule, duration, request_data, initial_portfolio, run_number)
+        VALUES
+            (#{flowId}, #{status}, #{tradingMode}, #{schedule}, #{duration},
+             #{requestData}, #{initialPortfolio}, #{runNumber})
+    </insert>
+
+    <update id="updateById">
+        UPDATE hedge_fund_flow_runs
+        SET status          = #{status},
+            final_portfolio = #{finalPortfolio},
+            results         = #{results},
+            error_message   = #{errorMessage},
+            started_at      = #{startedAt},
+            completed_at    = #{completedAt},
+            updated_at      = datetime('now')
+        WHERE id = #{id}
+    </update>
+
+</mapper>

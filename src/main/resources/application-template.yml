@@ -1,0 +1,103 @@
+server:
+  port: 8000
+
+spring:
+  datasource:
+    url: jdbc:sqlite:./ai-hedge-fund.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      connection-test-query: SELECT 1
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+tushare:
+  token: ${TUSHARE_TOKEN:}
+
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+financial-datasets:
+  api-key: ${FINANCIAL_DATASETS_API_KEY:}
+  base-url: https://api.financialdatasets.ai
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  base-url: ${OPENAI_API_BASE:https://api.openai.com}
+  # Spring AI 默认追加 /v1/chat/completions，讯飞 MaaS 使用 /v2/chat/completions
+  completions-path: /v1/chat/completions
+
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}
+
+groq:
+  api-key: ${GROQ_API_KEY:}
+
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+
+hedge-fund:
+  # 并发调用 LLM 的最大线程数，降低此值可减少对讯飞等限速 API 的并发压力
+  agent-concurrency: 1
+  # 工具调用缓存 TTL（秒），默认 3600 = 1 小时
+  tool-cache-ttl: 3600
+  # SSE 请求最长等待时长（毫秒），默认 30000000 = 30000 秒 = 500 分钟
+  sse-timeout-ms: ${HEDGE_FUND_SSE_TIMEOUT_MS:30000000}
+
+# 验证码配置
+verify-code:
+  # 验证码有效期（秒），默认 5 分钟
+  ttl-seconds: ${VERIFY_CODE_TTL:300}
+  # 重发冷却时间（秒），默认 60 秒
+  resend-cooldown: ${VERIFY_CODE_RESEND_COOLDOWN:60}
+  # 发件人显示名称
+  from-name: ${VERIFY_CODE_FROM_NAME:木木班}
+
+# 管理员令牌（用于 /admin/** 接口，生产环境务必通过 ADMIN_TOKEN 环境变量覆盖）
+admin:
+  token: ${ADMIN_TOKEN:please-change-me}
+
+# JWT 登录鉴权配置
+jwt:
+  # 签名密钥（HMAC-SHA256，至少 32 字节），生产环境务必通过环境变量覆盖
+  secret: ${JWT_SECRET:please-change-me-to-a-strong-secret-at-least-32-bytes}
+  # token 有效期（秒），默认 86400 = 1 天
+  expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
+
+# 网络搜索工具配置
+web-search:
+  # 激活的搜索服务商：tavily | serper | bocha
+  provider: ${WEB_SEARCH_PROVIDER:tavily}
+  tavily:
+    api-key: ${TAVILY_API_KEY:}
+    base-url: https://api.tavily.com
+  serper:
+    api-key: ${SERPER_API_KEY:}
+    base-url: https://google.serper.dev
+  bocha:
+    api-key: ${BOCHA_API_KEY:}
+    base-url: https://api.bochaai.com
+
+logging:
+  level:
+    com.aihedgefund: INFO
+    org.springframework.ai.mcp: INFO
+    io.modelcontextprotocol: INFO

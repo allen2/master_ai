@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.ToolCallCacheMapper">
+
+    <resultMap id="ToolCallCacheResultMap" type="com.aihedgefund.model.DO.ToolCallCacheDO">
+        <id property="id" column="id"/>
+        <result property="toolName" column="tool_name"/>
+        <result property="paramsHash" column="params_hash"/>
+        <result property="resultJson" column="result_json"/>
+        <result property="ttlSeconds" column="ttl_seconds"/>
+        <result property="hitCount" column="hit_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByToolAndHash" resultMap="ToolCallCacheResultMap">
+        SELECT id, tool_name, params_hash, result_json, ttl_seconds, hit_count, created_at, updated_at
+        FROM tool_call_cache
+        WHERE tool_name = #{toolName}
+          AND params_hash = #{paramsHash}
+          AND datetime(created_at, '+' || ttl_seconds || ' seconds') > datetime('now')
+        LIMIT 1
+    </select>
+
+    <!--
+        使用 INSERT OR REPLACE：当 (tool_name, params_hash) 唯一索引冲突时
+        （例如旧条目已过期但行仍存在），整行覆盖刷新，避免唯一索引冲突报错。
+        覆盖时 created_at 重置为当前时间，相当于续期；hit_count 重置为默认 1。
+    -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT OR REPLACE INTO tool_call_cache (tool_name, params_hash, result_json, ttl_seconds, created_at, updated_at)
+        VALUES (#{toolName}, #{paramsHash}, #{resultJson}, #{ttlSeconds}, datetime('now'), datetime('now'))
+    </insert>
+
+    <update id="incrementHitCount">
+        UPDATE tool_call_cache
+        SET hit_count  = hit_count + 1,
+            updated_at = datetime('now')
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteExpired">
+        DELETE FROM tool_call_cache
+        WHERE datetime(created_at, '+' || ttl_seconds || ' seconds') &lt;= datetime('now')
+    </delete>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM tool_call_cache
+    </select>
+
+    <select id="selectAll" resultMap="ToolCallCacheResultMap">
+        SELECT id, tool_name, params_hash, result_json, ttl_seconds, hit_count, created_at, updated_at
+        FROM tool_call_cache
+        ORDER BY updated_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+</mapper>

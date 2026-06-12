@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.HedgeFundFlowMapper">
+
+    <resultMap id="FlowResultMap" type="com.aihedgefund.model.DO.HedgeFundFlowDO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="nodes" column="nodes"/>
+        <result property="edges" column="edges"/>
+        <result property="viewport" column="viewport"/>
+        <result property="data" column="data"/>
+        <result property="isTemplate" column="is_template"/>
+        <result property="tags" column="tags"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectAll" resultMap="FlowResultMap">
+        SELECT * FROM hedge_fund_flows ORDER BY created_at DESC
+    </select>
+
+    <select id="selectById" resultMap="FlowResultMap">
+        SELECT * FROM hedge_fund_flows WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO hedge_fund_flows (name, description, nodes, edges, viewport, data, is_template, tags)
+        VALUES (#{name}, #{description}, #{nodes}, #{edges}, #{viewport}, #{data}, #{isTemplate}, #{tags})
+    </insert>
+
+    <update id="updateById">
+        UPDATE hedge_fund_flows
+        SET name        = #{name},
+            description = #{description},
+            nodes       = #{nodes},
+            edges       = #{edges},
+            viewport    = #{viewport},
+            data        = #{data},
+            is_template = #{isTemplate},
+            tags        = #{tags},
+            updated_at  = datetime('now')
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hedge_fund_flows WHERE id = #{id}
+    </delete>
+
+</mapper>

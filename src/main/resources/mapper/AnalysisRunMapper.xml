@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.AnalysisRunMapper">
+
+    <resultMap id="analysisRunMap" type="com.aihedgefund.model.DO.AnalysisRunDO">
+        <id     property="id"               column="id"/>
+        <result property="userId"           column="user_id"/>
+        <result property="tickers"          column="tickers"/>
+        <result property="modelName"        column="model_name"/>
+        <result property="selectedAnalysts" column="selected_analysts"/>
+        <result property="status"           column="status"/>
+        <result property="analystSignals"   column="analyst_signals"/>
+        <result property="decisions"        column="decisions"/>
+        <result property="errorMessage"     column="error_message"/>
+        <result property="createdAt"        column="created_at"/>
+        <result property="updatedAt"        column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO analysis_runs (user_id, tickers, model_name, selected_analysts, status)
+        VALUES (#{userId}, #{tickers}, #{modelName}, #{selectedAnalysts}, #{status})
+    </insert>
+
+    <update id="updateById">
+        UPDATE analysis_runs
+        SET status          = #{status},
+            analyst_signals = #{analystSignals},
+            decisions       = #{decisions},
+            error_message   = #{errorMessage},
+            updated_at      = datetime('now')
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByIdAndUserId" resultMap="analysisRunMap">
+        SELECT * FROM analysis_runs WHERE id = #{id} AND user_id = #{userId}
+    </select>
+
+    <select id="selectByUserId" resultMap="analysisRunMap">
+        SELECT * FROM analysis_runs
+        WHERE user_id = #{userId}
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM analysis_runs WHERE user_id = #{userId}
+    </select>
+
+</mapper>

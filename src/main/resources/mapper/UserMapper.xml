@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.aihedgefund.model.DO.UserDO">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="nickname" column="nickname"/>
+        <result property="deleted" column="deleted"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByUsername" resultMap="UserResultMap">
+        SELECT id, username, password_hash, nickname, deleted, created_at, updated_at
+        FROM users
+        WHERE username = #{username}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT id, username, password_hash, nickname, deleted, created_at, updated_at
+        FROM users
+        WHERE id = #{id}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password_hash, nickname)
+        VALUES (#{username}, #{passwordHash}, #{nickname})
+    </insert>
+
+    <select id="selectAll" resultMap="UserResultMap">
+        SELECT id, username, password_hash, nickname, deleted, created_at, updated_at
+        FROM users
+        WHERE deleted = 0
+        ORDER BY id ASC
+    </select>
+
+</mapper>
