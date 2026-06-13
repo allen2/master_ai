@@ -57,6 +57,43 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
+  /**
+   * 发送密码重置验证码
+   * @param {string} email
+   */
+  async function forgotPassword(email) {
+    const res = await fetch('/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || `发送失败 (${res.status})`)
+    }
+    return res.json()
+  }
+
+  /**
+   * 重置密码
+   * @param {string} email
+   * @param {string} code      邮箱验证码
+   * @param {string} newPassword
+   * @param {string} confirmPassword
+   */
+  async function resetPassword(email, code, newPassword, confirmPassword) {
+    const res = await fetch('/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, newPassword, confirmPassword })
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || `重置失败 (${res.status})`)
+    }
+    return res.json()
+  }
+
   /** 退出登录 */
   function logout() {
     token.value = ''
@@ -72,5 +109,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(USER_KEY, JSON.stringify(user.value))
   }
 
-  return { token, user, isLoggedIn, login, register, logout }
+  return { token, user, isLoggedIn, login, register, logout, forgotPassword, resetPassword }
 })

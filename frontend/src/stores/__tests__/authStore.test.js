@@ -109,4 +109,60 @@ describe('authStore', () => {
     expect(auth.token).toBe('existing-token')
     expect(auth.user.username).toBe('old')
   })
+
+  it('forgotPassword 成功时返回 message', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ message: '验证码已发送，请查收邮件' })
+    })
+
+    const auth = useAuthStore()
+    const result = await auth.forgotPassword('user@example.com')
+
+    expect(result.message).toBe('验证码已发送，请查收邮件')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/auth/forgot-password', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ email: 'user@example.com' })
+    }))
+  })
+
+  it('forgotPassword 失败时抛出包含 detail 的错误', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ detail: '该邮箱未注册' })
+    })
+
+    const auth = useAuthStore()
+    await expect(auth.forgotPassword('not-exist@example.com')).rejects.toThrow('该邮箱未注册')
+  })
+
+  it('resetPassword 成功时返回 message，且不写入登录状态', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ message: '密码重置成功，请使用新密码登录' })
+    })
+
+    const auth = useAuthStore()
+    const result = await auth.resetPassword('user@example.com', '123456', 'newpass', 'newpass')
+
+    expect(result.message).toBe('密码重置成功，请使用新密码登录')
+    expect(auth.isLoggedIn).toBe(false)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/auth/reset-password', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ email: 'user@example.com', code: '123456', newPassword: 'newpass', confirmPassword: 'newpass' })
+    }))
+  })
+
+  it('resetPassword 失败时抛出包含 detail 的错误', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({ detail: '验证码无效或已过期，请重新获取' })
+    })
+
+    const auth = useAuthStore()
+    await expect(auth.resetPassword('user@example.com', '000000', 'newpass', 'newpass'))
+        .rejects.toThrow('验证码无效或已过期，请重新获取')
+  })
 })
