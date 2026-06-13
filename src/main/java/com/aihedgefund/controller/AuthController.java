@@ -6,6 +6,7 @@ import com.aihedgefund.common.exception.BizException;
 import com.aihedgefund.model.DO.UserDO;
 import com.aihedgefund.model.req.LoginReq;
 import com.aihedgefund.model.req.RegisterReq;
+import com.aihedgefund.model.req.ResetPasswordReq;
 import com.aihedgefund.model.req.SendCodeReq;
 import com.aihedgefund.model.resp.AuthResp;
 import com.aihedgefund.service.AuthService;
@@ -54,6 +55,28 @@ public class AuthController {
     @PostMapping("/register")
     public AuthResp register(@RequestBody @Valid RegisterReq req) {
         return authService.register(req);
+    }
+
+    /**
+     * 发送密码重置验证码（公开接口）。
+     */
+    @PostMapping("/forgot-password")
+    public Map<String, String> forgotPassword(@RequestBody @Valid SendCodeReq req) {
+        authService.sendPasswordResetCode(req.getEmail());
+        Map<String, String> result = new HashMap<>();
+        result.put("message", "验证码已发送，请查收邮件");
+        return result;
+    }
+
+    /**
+     * 重置密码（公开接口，需先调用 /auth/forgot-password 获取验证码）。
+     */
+    @PostMapping("/reset-password")
+    public Map<String, String> resetPassword(@RequestBody @Valid ResetPasswordReq req) {
+        authService.resetPassword(req);
+        Map<String, String> result = new HashMap<>();
+        result.put("message", "密码重置成功，请使用新密码登录");
+        return result;
     }
 
     /**

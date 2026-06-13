@@ -27,6 +27,8 @@ public class AuthWebConfig implements WebMvcConfigurer {
                         "/auth/login",
                         "/auth/register",
                         "/auth/send-code",
+                        "/auth/forgot-password",
+                        "/auth/reset-password",
                         "/hedge-fund/analysts",
                         "/admin/**",
                         "/health",
