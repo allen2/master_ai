@@ -1,6 +1,6 @@
-# AI Hedge Fund — Java
+# 金木班 — AI 对冲基金分析平台
 
-AI 对冲基金的 Java 后端实现，从 Python 原版迁移而来。提供完整的 Web 界面，支持多 LLM Agent 并行分析和实时 SSE 推流。
+AI 对冲基金分析平台的 Java 实现，汇聚 21 位投资大师/分析师 Agent 并行分析，配合产业瓶颈反向拆解与逆向对立面研究框架，支持实时 SSE 推流与增量信号推送。
 
 > **仅供学习和研究，不构成投资建议，不执行真实交易。**
 
@@ -11,7 +11,7 @@ AI 对冲基金的 Java 后端实现，从 Python 原版迁移而来。提供完
 | 层 | 技术 |
 |----|------|
 | 后端 | Java 17、Spring Boot 3.2、MyBatis 3、SQLite |
-| AI | LangChain4j 0.36.2（OpenAI / Anthropic / Groq / Ollama） |
+| AI | LangChain4j 0.36.2 + Spring AI（OpenAI / Anthropic / Groq / Ollama / 讯飞 MaaS） |
 | 前端 | Vue 3、Vite 5、Element Plus、Pinia |
 | 构建 | Maven 3、frontend-maven-plugin |
 
@@ -19,7 +19,7 @@ AI 对冲基金的 Java 后端实现，从 Python 原版迁移而来。提供完
 
 ## 前置条件
 
-- **JDK 17+**（推荐使用 IntelliJ 内置 JBR，路径见下方）
+- **JDK 17+**
 - **Maven 3.6+**
 - **Node.js 18+**（开发模式下需要；生产打包由 Maven 自动下载 Node v20.11.0）
 
@@ -41,8 +41,8 @@ financial-datasets:
   api-key: YOUR_FINANCIAL_DATASETS_API_KEY   # 金融数据（必填）
 
 openai:
-  api-key: YOUR_OPENAI_API_KEY               # OpenAI（至少填一个 LLM）
-  base-url: https://api.openai.com           # 可替换为兼容 OpenAI 协议的端点
+  api-key: YOUR_OPENAI_API_KEY               # 至少填一个 LLM
+  base-url: https://api.openai.com           # 可替换为兼容端点（如讯飞 MaaS）
 
 anthropic:
   api-key: ${ANTHROPIC_API_KEY:}             # 可选
@@ -108,12 +108,14 @@ java -jar target/ai-hedge-fund-java-1.0.0-SNAPSHOT.jar
 
 | 路由 | 功能 |
 |------|------|
-| `/#/run` | **分析运行**：填写股票代码、选择 LLM 和分析师，实时查看 19 位分析师进度及最终交易决策 |
+| `/#/run` | **大师分析**：填写股票代码、选择 LLM 和分析师，实时查看 21 位分析师进度及最终交易决策 |
 | `/#/industry-analysis` | **产业分析**：输入一句话产业/标的描述，使用「行业瓶颈反向拆解选股法」五步框架自动研究并展示 Markdown 报告 |
 | `/#/contrarian-analysis` | **逆向对立面分析**：输入一句话热门行业/分析需求，使用「热门行业逆向对立面价值标的挖掘」五步框架自动研究并展示 Markdown 报告 |
 | `/#/api-keys` | **API Key 管理**：新增、查看、删除各 Provider 的 API Key |
 | `/#/flows` | **流程管理**：保存和管理常用分析配置，一键跳转运行 |
 | `/#/settings` | **设置**：查看可用 LLM 模型列表及后端健康状态 |
+| `/#/wallet` | **我的钱包**：查看金币余额和流水记录 |
+| `/#/contact` | **联系我们**：联系方式和平台介绍 |
 
 ---
 
@@ -149,6 +151,24 @@ curl -X POST http://localhost:8000/auth/login \
 
 返回 `token` 字段，后续请求带在 `Authorization` 头中。
 
+### 找回密码
+
+忘记密码时，可通过邮箱验证码自行重置密码：
+
+```bash
+# 1. 发送重置密码验证码（需为已注册邮箱）
+curl -X POST http://localhost:8000/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com"}'
+
+# 2. 使用验证码重置密码
+curl -X POST http://localhost:8000/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "code": "123456", "newPassword": "new_password", "confirmPassword": "new_password"}'
+```
+
+重置成功后请使用新密码重新登录。
+
 ---
 
 ## 金币系统
@@ -169,15 +189,21 @@ curl -X POST http://localhost:8000/admin/coins/grant \
 curl -X POST http://localhost:8000/admin/coins/grant \
   -H "Content-Type: application/json" \
   -H "X-Admin-Token: mumu-admin-2024" \
-  -d '{"email": "3433256865@qq.com", "amount": 10, "reason": "初始金币"}'
+  -d '{"email": "user@example.com", "amount": 10, "reason": "初始金币"}'
 ```
 
-> Windows PowerShell 下请使用 `Invoke-RestMethod`，避免单引号被 `curl.exe` 原样传递导致 JSON 解析失败：
+> Windows CMD 下 JSON 双引号需用 `{\"...\"}` 转义：
+>
+> ```cmd
+> curl -X POST http://localhost:8000/admin/coins/grant -H "X-Admin-Token: mumu-admin-2024" -H "Content-Type: application/json" -d "{\"email\":\"user@example.com\",\"amount\":10,\"reason\":\"初始金币\"}"
+> ```
+>
+> Windows PowerShell 下推荐使用 `Invoke-RestMethod`：
 >
 > ```powershell
 > Invoke-RestMethod -Uri "http://localhost:8000/admin/coins/grant" -Method Post `
 >   -Headers @{ "X-Admin-Token" = "mumu-admin-2024" } -ContentType "application/json" `
->   -Body '{"email": "3433256865@qq.com", "amount": 10, "reason": "初始金币"}'
+>   -Body '{"email": "user@example.com", "amount": 10, "reason": "初始金币"}'
 > ```
 
 ### 查询所有用户余额
@@ -219,13 +245,15 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `POST` | `/auth/send-code` | 发送邮箱验证码 |
+| `POST` | `/auth/send-code` | 发送邮箱验证码（注册用） |
 | `POST` | `/auth/register` | 注册（需验证码） |
 | `POST` | `/auth/login` | 登录，返回 JWT token |
 | `GET` | `/auth/me` | 获取当前用户信息 |
-| `POST` | `/hedge-fund/run` | 运行分析（SSE 流式响应，消耗 1 金币） |
-| `POST` | `/industry-analysis/run` | 产业瓶颈反向拆解分析（SSE 流式响应） |
-| `POST` | `/contrarian-analysis/run` | 热门行业逆向对立面分析（SSE 流式响应） |
+| `POST` | `/auth/forgot-password` | 发送密码重置验证码 |
+| `POST` | `/auth/reset-password` | 使用验证码重置密码 |
+| `POST` | `/hedge-fund/run` | 运行大师分析（SSE 流式响应，消耗 1 金币） |
+| `POST` | `/industry-analysis/run` | 产业瓶颈反向拆解分析（SSE 流式响应，消耗 1 金币） |
+| `POST` | `/contrarian-analysis/run` | 热门行业逆向对立面分析（SSE 流式响应，消耗 1 金币） |
 | `GET` | `/wallet/balance` | 查询金币余额 |
 | `GET` | `/wallet/transactions` | 金币流水（分页） |
 | `POST` | `/admin/coins/grant` | 管理员发放金币 |
@@ -238,11 +266,13 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 | `PUT` | `/flows/{id}` | 更新流程 |
 | `DELETE` | `/flows/{id}` | 删除流程 |
 | `GET` | `/flow-runs/{id}` | 查询运行记录 |
+| `GET` | `/analysis-runs` | 分析记录列表（分页） |
+| `GET` | `/analysis-runs/{id}` | 分析记录详情 |
 | `GET` | `/language-models` | 可用模型列表 |
 | `GET` | `/health` | 健康检查 |
 
 > `/hedge-fund/run` 为 SSE 长连接，单次请求最长等待时长由 `hedge-fund.sse-timeout-ms` 配置
-> （默认 `3000000` 毫秒 = 50 分钟），也可用环境变量 `HEDGE_FUND_SSE_TIMEOUT_MS` 覆盖。
+> （默认 `30000000` 毫秒 ≈ 500 分钟），也可用环境变量 `HEDGE_FUND_SSE_TIMEOUT_MS` 覆盖。
 
 **SSE 事件类型：**
 
@@ -250,8 +280,8 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 |------|------|------|
 | `start` | 请求开始 | `status`、`tickers` |
 | `progress` | 各 agent 进度变化 | `agent`、`ticker`、`status`（analyzing/done/error） |
-| `activity` | **agent 分析过程中的细粒度活动** | `agent`、`agent_id`、`message`（如「调用工具 getDaily 获取数据…」「调用大模型推理中…」「命中缓存：fina_indicator」） |
-| `signal` | **单个 agent 分析完成即推送** | `agent`、`agent_id`、`signals`（`ticker → {signal, confidence, reasoning}`） |
+| `activity` | agent 分析过程中的细粒度活动 | `agent`、`agent_id`、`message`（如「调用工具 getDaily 获取数据…」「调用大模型推理中…」「命中缓存：fina_indicator」） |
+| `signal` | 单个 agent 分析完成即推送 | `agent`、`agent_id`、`signals`（`ticker → {signal, confidence, reasoning}`） |
 | `complete` | 全部完成 | `analyst_signals`、`decisions`（最终汇总）、`status` |
 | `error` | 执行失败 | `message` |
 
@@ -263,81 +293,41 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 
 ---
 
-## 产业瓶颈反向拆解分析（IndustryAnalysisController）
+## Agent 体系（21 位）
 
-`POST /industry-analysis/run` 接受用户输入的一句话产业/标的描述（及附加筛选条件，如 PE 上限、市值区间），
-由 `IndustryBottleneckResearchAgent` 调用大模型 + 网络搜索等工具，
-按「行业瓶颈反向拆解选股法」五步框架（逆向拆解瓶颈 → 锁定非对称标的 → 穿透财务拐点 → AI 红队测试 → 设定熔断机制）
-完成研究，以 SSE 流式返回分析进度和最终 Markdown 报告。
+### 投资大师（13 位）
 
-请求开始时扣减用户 1 个金币（余额不足返回 402），并创建一条「分析记录」（状态 `RUNNING`），
-分析完成后回填 Markdown 报告（状态 `COMPLETE`），失败则记录错误信息（状态 `ERROR`）。
-该记录与个股分析记录共用 `analysis_runs` 表和 `/analysis-runs` 接口，
-通过 `selected_analysts = ["industry_analysis"]` 标记区分；列表中的 `tickers` 字段为本次输入的产业分析需求文本，
-详情中的 `decisions.report` 即为 Markdown 报告。
+| Agent ID | 人格 |
+|----------|------|
+| `warren_buffett` | 巴菲特 — 价值投资、护城河 |
+| `charlie_munger` | 芒格 — 安全边际、品质优先 |
+| `ben_graham` | 格雷厄姆 — 深度价值、净流动资产 |
+| `phil_fisher` | 费雪 — 成长投资、闲聊法 |
+| `peter_lynch` | 林奇 — 自下而上、PEG |
+| `cathie_wood` |木头 — 破坏性创新、ARK |
+| `bill_ackman` | 阿克曼 — 集中押注、激进价值 |
+| `michael_burry` | 布里 — 逆向深价值、危机嗅觉 |
+| `stanley_druckenmiller` | 德鲁肯米勒 — 宏观趋势、不对称风险 |
+| `rakesh_jhunjhunwala` | 金瓦拉 — 印度成长价值 |
+| `nassim_taleb` | 塔勒布 — 黑天鹅、尾部风险 |
+| `mohnish_pabrai` | 帕布莱 — 克隆投资、低风险高回报 |
+| `aswath_damodaran` | 达摩达兰 — DCF 估值、企业叙事 |
 
-**请求体：**
+### 专项分析师（4 位）
 
-```json
-{
-  "query": "分析AI产业，找到PE在100以内的标的",
-  "model_name": "astron-code-latest",
-  "model_provider": "OpenAI"
-}
-```
+| Agent ID | 职责 |
+|----------|------|
+| `valuation_analyst` | 估值分析（PE/PB/EV/DCF） |
+| `news_sentiment_analyst` | 新闻情绪分析 |
+| `industry_analysis` | 产业瓶颈反向拆解 |
+| `contrarian_analysis` | 逆向对立面研究 |
 
-**SSE 事件类型：**
+### 风控 + 组合（2 位）
 
-| 事件 | 时机 | data |
-|------|------|------|
-| `start` | 请求开始 | `status`、`query` |
-| `activity` | 分析过程中的活动进度 | `message`（如「调用工具 webSearch 获取数据…」「调用大模型推理中…」） |
-| `complete` | 分析完成 | `report`（Markdown 格式五段式报告）、`status` |
-| `error` | 执行失败 | `message` |
-
-系统提示词（五步框架定义）外置于 `src/main/resources/prompts/industry_bottleneck_research.md`，
-通过 `PromptLoader` 加载，修改框架内容无需改动代码。
-
----
-
-## 热门行业逆向对立面分析（ContrarianAnalysisController）
-
-`POST /contrarian-analysis/run` 接受用户输入的一句话热门行业/分析需求，
-由 `ContrarianSectorResearchAgent` 调用大模型 + 网络搜索等工具，
-按「通用热门行业逆向对立面价值标的挖掘」五步框架
-（量化判定识别热门行业 → 四大维度推导对立面赛道 → 对立面三层漏斗标的筛选 → 标的统一量化打分模型 → 风控体系+仓位约束）
-完成研究，以 SSE 流式返回分析进度和最终 Markdown 报告。
-
-请求开始时扣减用户 1 个金币（余额不足返回 402），并创建一条「分析记录」（状态 `RUNNING`），
-分析完成后回填 Markdown 报告（状态 `COMPLETE`），失败则记录错误信息（状态 `ERROR`）。
-该记录与个股分析记录共用 `analysis_runs` 表和 `/analysis-runs` 接口，
-通过 `selected_analysts = ["contrarian_analysis"]` 标记区分；列表中的 `tickers` 字段为本次输入的分析需求文本，
-详情中的 `decisions.report` 即为 Markdown 报告。
-
-**请求体：**
-
-```json
-{
-  "query": "分析新能源行业的逆向对立面标的",
-  "model_name": "astron-code-latest",
-  "model_provider": "OpenAI"
-}
-```
-
-**SSE 事件类型：**
-
-| 事件 | 时机 | data |
-|------|------|------|
-| `start` | 请求开始 | `status`、`query` |
-| `activity` | 分析过程中的活动进度 | `message`（如「调用工具 webSearch 获取数据…」「调用大模型推理中…」） |
-| `complete` | 分析完成 | `report`（Markdown 格式五段式报告）、`status` |
-| `error` | 执行失败 | `message` |
-
-系统提示词（五步框架定义）外置于 `src/main/resources/prompts/contrarian_sector_research.md`，
-通过 `PromptLoader` 加载，修改框架内容无需改动代码。
-
-前端 `complete` 事件返回的 `report` 为 Markdown 文本，页面通过 `marked` + `DOMPurify`
-渲染为带样式的 HTML（标题、列表、表格、代码块等），并对渲染结果做 XSS 净化。
+| Agent ID | 职责 |
+|----------|------|
+| `risk_manager` | 风险管理 |
+| `portfolio_manager` | 组合决策（质量价值三重门槛） |
 
 ---
 
@@ -368,8 +358,7 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 > `warren_buffett, charlie_munger, ben_graham, mohnish_pabrai, aswath_damodaran, valuation_analyst`。
 >
 > 前端 `/#/run` 页面「分析师」选择器旁提供 **「质量价值组合」一键预设按钮**，
-> 点击即自动选中上述 6 位分析师，无需手动逐个勾选。运行后右侧决策卡片会展示
-> 「质量价值门槛」明细（各组通过 / 否决 / 缺组，配色区分）。
+> 点击即自动选中上述 6 位分析师。
 
 **单个 ticker 的决策响应字段：**
 
@@ -379,15 +368,89 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 | `quantity` | int | 买入数量；`hold` 时为 0 |
 | `confidence` | int | 全部参与分析师的平均置信度 |
 | `gate_passed` | boolean | 三组门槛是否全部通过 |
-| `gate_detail` | string[] | 各组明细，如 `"护城河组: 通过(2多/0中)"`、`"DCF内在价值组: 缺组(未选相关分析师)"` |
+| `gate_detail` | string[] | 各组明细 |
 | `bull_count` / `bear_count` | int | 该 ticker 的总看多 / 看空信号数 |
 | `reasoning` | string | 决策说明（含门槛汇总） |
 
 ---
 
-## 数据工具与缓存（TushareDataTools）
+## 产业瓶颈反向拆解分析
 
-`TushareDataTools` 暴露 5 个金融数据工具（`@Tool`），既供 LLM Agent 主动调用，也作为 MCP Server 工具对外暴露：
+`POST /industry-analysis/run` 接受用户输入的一句话产业/标的描述（及附加筛选条件，如 PE 上限、市值区间），
+由 `IndustryBottleneckResearchAgent` 调用大模型 + 网络搜索等工具，
+按「行业瓶颈反向拆解选股法」五步框架（逆向拆解瓶颈 → 锁定非对称标的 → 穿透财务拐点 → AI 红队测试 → 设定熔断机制）
+完成研究，以 SSE 流式返回分析进度和最终 Markdown 报告。
+
+请求开始时扣减用户 1 个金币（余额不足返回 402），并创建一条「分析记录」（状态 `RUNNING`），
+分析完成后回填 Markdown 报告（状态 `COMPLETE`），失败则记录错误信息（状态 `ERROR`）。
+
+**请求体：**
+
+```json
+{
+  "query": "分析AI产业，找到PE在100以内的标的",
+  "model_name": "astron-code-latest",
+  "model_provider": "OpenAI"
+}
+```
+
+**SSE 事件类型：**
+
+| 事件 | 时机 | data |
+|------|------|------|
+| `start` | 请求开始 | `status`、`query` |
+| `activity` | 分析过程中的活动进度 | `message` |
+| `complete` | 分析完成 | `report`（Markdown 格式五段式报告）、`status` |
+| `error` | 执行失败 | `message` |
+
+系统提示词外置于 `src/main/resources/prompts/industry_bottleneck_research.md`，
+通过 `PromptLoader` 加载，修改框架内容无需改动代码。
+
+---
+
+## 热门行业逆向对立面分析
+
+`POST /contrarian-analysis/run` 接受用户输入的一句话热门行业/分析需求，
+由 `ContrarianSectorResearchAgent` 调用大模型 + 网络搜索等工具，
+按「通用热门行业逆向对立面价值标的挖掘」五步框架
+（量化判定识别热门行业 → 四大维度推导对立面赛道 → 对立面三层漏斗标的筛选 → 标的统一量化打分模型 → 风控体系+仓位约束）
+完成研究，以 SSE 流式返回分析进度和最终 Markdown 报告。
+
+请求开始时扣减用户 1 个金币（余额不足返回 402），并创建一条「分析记录」（状态 `RUNNING`），
+分析完成后回填 Markdown 报告（状态 `COMPLETE`），失败则记录错误信息（状态 `ERROR`）。
+
+**请求体：**
+
+```json
+{
+  "query": "分析新能源行业的逆向对立面标的",
+  "model_name": "astron-code-latest",
+  "model_provider": "OpenAI"
+}
+```
+
+**SSE 事件类型：**
+
+| 事件 | 时机 | data |
+|------|------|------|
+| `start` | 请求开始 | `status`、`query` |
+| `activity` | 分析过程中的活动进度 | `message` |
+| `complete` | 分析完成 | `report`（Markdown 格式五段式报告）、`status` |
+| `error` | 执行失败 | `message` |
+
+系统提示词外置于 `src/main/resources/prompts/contrarian_sector_research.md`，
+通过 `PromptLoader` 加载，修改框架内容无需改动代码。
+
+前端 `complete` 事件返回的 `report` 为 Markdown 文本，页面通过 `marked` + `DOMPurify`
+渲染为带样式的 HTML，并对渲染结果做 XSS 净化。
+
+---
+
+## 数据工具与缓存
+
+### TushareDataTools（A股金融数据）
+
+暴露 5 个金融数据工具（`@Tool`），既供 LLM Agent 主动调用，也作为 MCP Server 工具对外暴露：
 
 | 工具 | Tushare 接口 | 用途 |
 |------|--------------|------|
@@ -400,27 +463,23 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 **全路径结果缓存**：每个工具方法内置缓存（复用 `ToolCallCacheService` / `tool_call_cache` 表），
 对 LLM 工具调用、MCP 外部调用、直接 Java 调用三条路径均生效：
 
-1. 用调用参数构造确定性缓存键（参数按 key 排序，如 `end_date=...&start_date=...&ts_code=...`）
-2. 先查缓存 → 命中直接返回，**跳过 Tushare API**
+1. 用调用参数构造确定性缓存键（参数按 key 排序）
+2. 先查缓存 → 命中直接返回，跳过 Tushare API
 3. 未命中 → 请求 API → 结果非空才写回缓存并返回
-4. 缓存命名空间前缀 `tushare.`（如 `tushare.daily`），与 LLM 工具调用层缓存键隔离
+4. 缓存命名空间前缀 `tushare.`，与 LLM 工具调用层缓存键隔离
 5. 缓存读写异常自动降级（仅告警，绝不影响取数）
 
 > TTL 由 `hedge-fund.tool-cache-ttl` 配置（默认 3600s），启动时自动清理过期条目。
-> 写入采用 `INSERT OR REPLACE`：相同 `(tool_name, params_hash)` 重复写入会整行覆盖并刷新 `created_at`
-> （等于续期），不会因唯一索引冲突报错。
 
----
+### WebSearchTools（网络搜索）
 
-## 网络搜索工具（WebSearchTools）
-
-让 Agent 具备**联网搜索**能力，检索金融数据接口里没有的实时信息（公司最新新闻、行业动态、政策、研报观点等）。同样以 `@Tool` 暴露，既供 LLM Agent 调用，也注册为 MCP 工具。
+让 Agent 具备联网搜索能力，检索金融数据接口里没有的实时信息。
 
 | 工具 | 参数 | 用途 |
 |------|------|------|
-| `webSearch` | `query`（必填）、`maxResults`（选填，默认 5，最大 10） | 互联网搜索，返回标题 / 链接 / 摘要 |
+| `webSearch` | `query`（必填）、`maxResults`（选填，默认 5，最大 10） | 互联网搜索，返回标题/链接/摘要 |
 
-**可插拔的搜索服务商**：底层抽象为 `WebSearchProvider`，内置三家实现，通过 `web-search.provider` 选择激活其一：
+**可插拔的搜索服务商**：
 
 | provider | 服务商 | 鉴权 | API Key 配置 |
 |----------|--------|------|--------------|
@@ -428,54 +487,26 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 | `serper` | Serper.dev（Google） | header `X-API-KEY` | `SERPER_API_KEY` |
 | `bocha` | 博查（国内中文搜索） | header `Bearer` | `BOCHA_API_KEY` |
 
-配置示例（`application.yml`）：
+配置示例：
 
 ```yaml
 web-search:
-  provider: ${WEB_SEARCH_PROVIDER:tavily}   # tavily | serper | bocha
-  tavily:
-    api-key: ${TAVILY_API_KEY:}
-  serper:
-    api-key: ${SERPER_API_KEY:}
-  bocha:
-    api-key: ${BOCHA_API_KEY:}
+  provider: ${WEB_SEARCH_PROVIDER:tavily}
 ```
 
-- 结果带缓存（命名空间 `websearch.{provider}`，复用 `tool_call_cache`），相同查询直接返回缓存
-- 未配置对应 API Key 时返回明确提示而非报错；缓存读写异常自动降级
-- 切换服务商只改 `web-search.provider`，无需改代码；新增服务商只需实现 `WebSearchProvider`
+- 结果带缓存（命名空间 `websearch.{provider}`）
+- 切换服务商只改 `web-search.provider`，无需改代码
 
 ---
 
-## 系统提示词外置（PromptLoader）
+## 系统提示词外置
 
-Agent 的系统提示词支持从代码外置到 classpath 下的 Markdown 文件，便于非开发人员调整措辞、做 A/B 实验，无需改代码重编译。
+Agent 的系统提示词支持从代码外置到 classpath 下的 Markdown 文件，便于调整措辞、做 A/B 实验，无需改代码重编译。
 
-- 提示词文件位置：`src/main/resources/prompts/{name}.md`
-- 加载器：`PromptLoader.load(name)` —— 读取 `classpath:prompts/{name}.md`，去除首尾空白后**按文件名缓存**
-- 加载时机：Agent 在 **Bean 实例化（系统启动）** 时通过构造器调用 `promptLoader.load(...)` 读取并缓存
-- 文件缺失 / 读取失败：抛出 `IllegalStateException`，**启动即失败**（快速暴露配置错误）
-
-示例（`WarrenBuffettAgent`，提示词位于 `prompts/warren_buffett.md`）：
-
-```java
-public WarrenBuffettAgent(LlmClientFactory llmFactory, StructuredOutputHelper outputHelper,
-        PromptLoader promptLoader) {
-    super(llmFactory, outputHelper);
-    this.systemPrompt = promptLoader.load("warren_buffett");   // 启动时加载
-}
-
-@Override
-protected String getSystemPrompt() {
-    return systemPrompt;
-}
-```
-
-全部 15 个 LLM Agent（13 位投资大师 + 估值/新闻情绪 2 个专项）的系统提示词均已外置到
-`src/main/resources/prompts/` 下的同名 md 文件（文件名 = `agentId`，如 `warren_buffett.md`、
-`valuation_analyst.md`）。调整提示词只需改对应 md 文件，无需改代码。
-
-> 新增 Agent 时：在 `prompts/` 下建 `{agentId}.md`，构造器注入 `PromptLoader` 并 `load("{agentId}")` 即可。
+- 提示词文件：`src/main/resources/prompts/{name}.md`
+- 加载器：`PromptLoader.load(name)` — 读取并按文件名缓存
+- 加载时机：Agent Bean 实例化（系统启动）时通过构造器加载
+- 文件缺失：抛出 `IllegalStateException`，启动即失败
 
 ---
 
@@ -506,23 +537,28 @@ mvn package -DskipTests -Dfrontend.skip=true
 ## 项目结构
 
 ```
-ai-hedge-fund-java/
+master_ai/
 ├── frontend/                   # Vue 3 前端源码
 │   ├── src/
 │   │   ├── api/index.js        # Axios API 封装
-│   │   ├── stores/             # Pinia 状态（runStore、settingsStore、authStore、walletStore）
-│   │   └── views/              # 页面组件（Run/ApiKeys/Flows/Settings/Wallet/Login/Register）
+│   │   ├── stores/             # Pinia 状态（auth/run/settings/wallet/industry/contrarian）
+│   │   └── views/              # 页面组件（Run/Industry/Contrarian/ApiKeys/Flows/Settings/Wallet/Login/Register/Contact/History）
 │   └── vite.config.js
 ├── src/main/java/com/aihedgefund/
-│   ├── agent/                  # 19 位分析师 Agent + Risk/Portfolio Manager
+│   ├── agent/                  # 21 位 Agent（13 投资大师 + 4 专项分析师 + 风控 + 组合）
 │   ├── controller/             # REST/SSE 接口
 │   ├── orchestrator/           # 并行工作流（HedgeFundOrchestrator）
-│   ├── service/                # 业务逻辑
+│   ├── service/                # 业务逻辑（Auth/Wallet/Admin/Email/Cache）
 │   ├── mapper/                 # MyBatis Mapper
+│   ├── auth/                   # JWT 鉴权（JwtUtil + AuthInterceptor）
 │   └── llm/                    # LLM 客户端工厂（LangChain4j）
 ├── src/main/resources/
-│   ├── application.yml
+│   ├── application.yml         # 运行配置
+│   ├── application-template.yml # 配置模板（不含真实密钥）
+│   ├── prompts/                # 21 个 Agent 系统提示词（Markdown）
 │   └── db/schema.sql           # SQLite 表结构（启动时自动初始化）
+├── ai-hedge-fund.db            # SQLite 数据库文件（自动创建）
+├── ai_anly.md                  # 示例分析报告（ABF载板/液冷散热/OLTC）
 └── pom.xml
 ```
 
@@ -531,3 +567,15 @@ ai-hedge-fund-java/
 ## 数据存储
 
 使用 SQLite，数据库文件为项目根目录下的 `ai-hedge-fund.db`，首次启动自动创建。无需额外安装数据库。
+
+**核心表：**
+
+| 表 | 用途 |
+|----|------|
+| `users` | 用户账号（邮箱 + 密码 + 昵称） |
+| `user_wallets` | 金币余额 |
+| `coin_transactions` | 金币流水 |
+| `api_keys` | 用户动态配置的 API Key |
+| `flows` | 保存的分析流程配置 |
+| `analysis_runs` | 分析运行记录（个股/产业/逆向共用） |
+| `tool_call_cache` | 工具调用结果缓存 |
