@@ -2,6 +2,7 @@ package com.aihedgefund.service;
 
 import com.aihedgefund.auth.JwtUtil;
 import com.aihedgefund.auth.VerificationCodeStore;
+import com.aihedgefund.auth.VerificationPurpose;
 import com.aihedgefund.common.exception.BizException;
 import com.aihedgefund.mapper.UserMapper;
 import com.aihedgefund.model.DO.UserDO;
@@ -51,7 +52,7 @@ public class AuthService {
      */
     public void sendVerificationCode(String email) {
         log.info("发送注册验证码请求, email={}", email);
-        String code = codeStore.generate(email);
+        String code = codeStore.generate(email, VerificationPurpose.REGISTER);
         int ttlMinutes = codeTtlSeconds / 60;
         emailService.sendVerificationCode(email, code, ttlMinutes);
         log.info("注册验证码已生成并发送, email={}", email);
@@ -68,7 +69,7 @@ public class AuthService {
         log.info("用户注册请求, email={}", req.getUsername());
 
         // 验证码校验
-        if (!codeStore.verify(req.getUsername(), req.getCode())) {
+        if (!codeStore.verify(req.getUsername(), req.getCode(), VerificationPurpose.REGISTER)) {
             throw new BizException("验证码无效或已过期，请重新获取");
         }
 

@@ -35,11 +35,12 @@ public class VerificationCodeStore {
     /**
      * 生成并保存验证码。若距上次发送不足冷却时间，则抛出 BizException。
      *
-     * @param email 目标邮箱（大小写不敏感）
+     * @param email   目标邮箱（大小写不敏感）
+     * @param purpose 验证码用途，见 {@link VerificationPurpose}
      * @return 生成的 6 位验证码
      */
-    public String generate(String email) {
-        String key = email.toLowerCase();
+    public String generate(String email, String purpose) {
+        String key = buildKey(email, purpose);
         CodeEntry existing = store.get(key);
         if (existing != null && !existing.used()) {
             long cooldownMs = (long) resendCooldown * 1000;
@@ -60,12 +61,13 @@ public class VerificationCodeStore {
     /**
      * 校验验证码。校验成功后立即标记为已使用，防止重复消费。
      *
-     * @param email 邮箱
-     * @param code  用户输入的验证码
+     * @param email   邮箱
+     * @param code    用户输入的验证码
+     * @param purpose 验证码用途，见 {@link VerificationPurpose}
      * @return true 表示验证通过
      */
-    public boolean verify(String email, String code) {
-        String key = email.toLowerCase();
+    public boolean verify(String email, String code, String purpose) {
+        String key = buildKey(email, purpose);
         CodeEntry entry = store.get(key);
         if (entry == null) {
             log.debug("验证码不存在, email={}", key);
@@ -88,6 +90,11 @@ public class VerificationCodeStore {
         store.put(key, new CodeEntry(entry.code(), entry.expireAt(), entry.createdAt(), true));
         log.debug("验证码验证通过, email={}", key);
         return true;
+    }
+
+    /** 构造存储 key：邮箱（小写）+ 用途，避免不同用途的验证码互相覆盖 */
+    private String buildKey(String email, String purpose) {
+        return email.toLowerCase() + ":" + purpose;
     }
 
     /** 每 10 分钟清理过期条目 */
