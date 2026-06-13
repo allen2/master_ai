@@ -21,6 +21,9 @@ public interface UserMapper {
     /** 新增用户 */
     int insert(UserDO user);
 
+    /** 更新密码（同时更新 updated_at） */
+    int updatePassword(@Param("id") Long id, @Param("passwordHash") String passwordHash);
+
     /** 查询所有未删除的用户（管理员用） */
     List<UserDO> selectAll();
 }

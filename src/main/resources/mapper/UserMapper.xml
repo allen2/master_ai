@@ -34,6 +34,14 @@
         VALUES (#{username}, #{passwordHash}, #{nickname})
     </insert>
 
+    <update id="updatePassword">
+        UPDATE users
+        SET password_hash = #{passwordHash},
+            updated_at = datetime('now')
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
     <select id="selectAll" resultMap="UserResultMap">
         SELECT id, username, password_hash, nickname, deleted, created_at, updated_at
         FROM users
