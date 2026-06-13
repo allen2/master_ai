@@ -8,6 +8,7 @@ import com.aihedgefund.mapper.UserMapper;
 import com.aihedgefund.model.DO.UserDO;
 import com.aihedgefund.model.req.LoginReq;
 import com.aihedgefund.model.req.RegisterReq;
+import com.aihedgefund.model.req.ResetPasswordReq;
 import com.aihedgefund.model.resp.AuthResp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +92,51 @@ public class AuthService {
 
         log.info("用户注册成功, userId={}, email={}", user.getId(), user.getUsername());
         return buildAuthResp(user);
+    }
+
+    /**
+     * 发送密码重置验证码。
+     *
+     * @param email 目标邮箱
+     */
+    public void sendPasswordResetCode(String email) {
+        log.info("发送密码重置验证码请求, email={}", email);
+
+        UserDO user = userMapper.selectByUsername(email);
+        if (user == null) {
+            throw new BizException("该邮箱未注册");
+        }
+
+        String code = codeStore.generate(email, VerificationPurpose.RESET_PASSWORD);
+        int ttlMinutes = codeTtlSeconds / 60;
+        emailService.sendPasswordResetCode(email, code, ttlMinutes);
+        log.info("密码重置验证码已生成并发送, email={}", email);
+    }
+
+    /**
+     * 重置密码（需先通过邮箱验证码校验）。
+     *
+     * @param req 重置密码入参
+     */
+    @Transactional
+    public void resetPassword(ResetPasswordReq req) {
+        log.info("重置密码请求, email={}", req.getEmail());
+
+        if (!req.getNewPassword().equals(req.getConfirmPassword())) {
+            throw new BizException("两次输入的密码不一致");
+        }
+
+        if (!codeStore.verify(req.getEmail(), req.getCode(), VerificationPurpose.RESET_PASSWORD)) {
+            throw new BizException("验证码无效或已过期，请重新获取");
+        }
+
+        UserDO user = userMapper.selectByUsername(req.getEmail());
+        if (user == null) {
+            throw new BizException(404, "用户不存在");
+        }
+
+        userMapper.updatePassword(user.getId(), passwordEncoder.encode(req.getNewPassword()));
+        log.info("密码重置成功, userId={}, email={}", user.getId(), req.getEmail());
     }
 
     /**
