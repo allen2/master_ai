@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8888
 
 spring:
   datasource:
@@ -69,7 +69,7 @@ verify-code:
   # 重发冷却时间（秒），默认 60 秒
   resend-cooldown: ${VERIFY_CODE_RESEND_COOLDOWN:60}
   # 发件人显示名称
-  from-name: ${VERIFY_CODE_FROM_NAME:木木班}
+  from-name: ${VERIFY_CODE_FROM_NAME:金木智库}
 
 # 管理员令牌（用于 /admin/** 接口，生产环境务必通过 ADMIN_TOKEN 环境变量覆盖）
 admin:
