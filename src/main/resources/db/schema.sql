@@ -106,3 +106,27 @@ CREATE TABLE IF NOT EXISTS hedge_fund_flow_runs (
     updated_at        TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (flow_id) REFERENCES hedge_fund_flows(id)
 );
+
+-- 留言板主表（所有登录用户可见，逻辑删除）
+CREATE TABLE IF NOT EXISTS message_board (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    content     TEXT    NOT NULL,
+    like_count  INTEGER NOT NULL DEFAULT 0,
+    deleted     INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_message_board_created_at ON message_board(created_at);
+CREATE INDEX IF NOT EXISTS idx_message_board_user_id ON message_board(user_id);
+
+-- 留言点赞记录（唯一索引防止重复点赞，用于判断"我是否已点赞"）
+CREATE TABLE IF NOT EXISTS message_board_likes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id  INTEGER NOT NULL,
+    user_id     INTEGER NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_message_board_likes_msg_user
+    ON message_board_likes(message_id, user_id);
