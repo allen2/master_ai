@@ -13,18 +13,19 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/auth':            'http://localhost:8000',
-      '/wallet':          'http://localhost:8000',
-      '/analysis-runs':   'http://localhost:8000',
-      '/admin':           'http://localhost:8000',
-      '/hedge-fund':      'http://localhost:8000',
-      '/industry-analysis': 'http://localhost:8000',
-      '/contrarian-analysis': 'http://localhost:8000',
-      '/api-keys':        'http://localhost:8000',
-      '/flows':           'http://localhost:8000',
-      '/flow-runs':       'http://localhost:8000',
-      '/language-models': 'http://localhost:8000',
-      '/health':          'http://localhost:8000'
+      '/auth':            'http://localhost:8888',
+      '/wallet':          'http://localhost:8888',
+      '/analysis-runs':   'http://localhost:8888',
+      '/message-board':   'http://localhost:8888',
+      '/admin':           'http://localhost:8888',
+      '/hedge-fund':      'http://localhost:8888',
+      '/industry-analysis': 'http://localhost:8888',
+      '/contrarian-analysis': 'http://localhost:8888',
+      '/api-keys':        'http://localhost:8888',
+      '/flows':           'http://localhost:8888',
+      '/flow-runs':       'http://localhost:8888',
+      '/language-models': 'http://localhost:8888',
+      '/health':          'http://localhost:8888'
     }
   }
 })

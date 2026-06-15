@@ -62,3 +62,10 @@ export const analysisRunsApi = {
   list:   (pageNum = 1, pageSize = 10) => api.get('/analysis-runs', { params: { pageNum, pageSize } }),
   detail: (id)                         => api.get(`/analysis-runs/${id}`)
 }
+
+export const messageBoardApi = {
+  list:   (pageNum = 1, pageSize = 20) => api.get('/message-board', { params: { pageNum, pageSize } }),
+  create: (content)  => api.post('/message-board', { content }),
+  remove: (id)        => api.delete(`/message-board/${id}`),
+  like:   (id)        => api.post(`/message-board/${id}/like`)
+}
