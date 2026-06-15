@@ -116,6 +116,7 @@ java -jar target/ai-hedge-fund-java-1.0.0-SNAPSHOT.jar
 | `/#/settings` | **设置**：查看可用 LLM 模型列表及后端健康状态 |
 | `/#/wallet` | **我的钱包**：查看金币余额和流水记录 |
 | `/#/contact` | **联系我们**：联系方式和平台介绍 |
+| `/#/message-board` | **留言板**：登录用户可发表留言，所有登录用户可见并可点赞，删除仅限本人留言 |
 
 ---
 
@@ -270,6 +271,11 @@ ADMIN_TOKEN=your-secret-token mvn spring-boot:run
 | `GET` | `/analysis-runs/{id}` | 分析记录详情 |
 | `GET` | `/language-models` | 可用模型列表 |
 | `GET` | `/health` | 健康检查 |
+| `GET` | `/message-board` | 分页查询留言列表（`pageNum` / `pageSize`） |
+| `POST` | `/message-board` | 发表留言 |
+| `DELETE` | `/message-board/{id}` | 删除自己的留言 |
+| `POST` | `/message-board/{id}/like` | 切换点赞/取消点赞 |
+| `DELETE` | `/admin/message-board/{id}` | 管理员删除任意留言 |
 
 > `/hedge-fund/run` 为 SSE 长连接，单次请求最长等待时长由 `hedge-fund.sse-timeout-ms` 配置
 > （默认 `30000000` 毫秒 ≈ 500 分钟），也可用环境变量 `HEDGE_FUND_SSE_TIMEOUT_MS` 覆盖。
