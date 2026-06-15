@@ -17,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +43,12 @@ class MessageBoardServiceTest {
         user.setNickname("小明");
         when(userMapper.selectById(1L)).thenReturn(user);
 
+        when(messageBoardMapper.insert(any(MessageBoardDO.class))).thenAnswer(invocation -> {
+            MessageBoardDO arg = invocation.getArgument(0);
+            arg.setId(10L);
+            return 1;
+        });
+
         MessageBoardDO saved = new MessageBoardDO();
         saved.setId(10L);
         saved.setUserId(1L);
@@ -52,7 +57,7 @@ class MessageBoardServiceTest {
         saved.setDeleted(0);
         saved.setCreatedAt("2026-06-15 10:00:00");
         saved.setUpdatedAt("2026-06-15 10:00:00");
-        lenient().when(messageBoardMapper.selectById(10L)).thenReturn(saved);
+        when(messageBoardMapper.selectById(10L)).thenReturn(saved);
 
         MessageBoardResp resp = messageBoardService.create(1L, "hello");
 

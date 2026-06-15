@@ -46,12 +46,11 @@ public class MessageBoardService {
         MessageBoardDO entity = new MessageBoardDO();
         entity.setUserId(userId);
         entity.setContent(content);
-        entity.setLikeCount(0);
-        entity.setDeleted(0);
         messageBoardMapper.insert(entity);
         log.info("发表留言, id={}, userId={}", entity.getId(), userId);
 
-        return toResp(entity, userId, resolveNickname(userId), false);
+        MessageBoardDO saved = messageBoardMapper.selectById(entity.getId());
+        return toResp(saved, userId, resolveNickname(userId), false);
     }
 
     /**
