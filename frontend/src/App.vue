@@ -1,18 +1,18 @@
 <!-- frontend/src/App.vue -->
 <template>
-  <!-- 未登录：全屏显示 login/register 页面 -->
+  <!-- 未登录：全屏显示首页（登录/注册以弹窗形式展示） -->
   <router-view v-if="!auth.isLoggedIn" />
 
   <!-- 已登录：显示完整布局 -->
   <div v-else class="app-layout">
     <aside class="sidebar">
-      <div class="sidebar-logo">📈 木木班</div>
+      <div class="sidebar-logo">📈 金木智库</div>
       <nav class="sidebar-nav">
-        <router-link to="/run"      class="nav-item">📈 分析运行</router-link>
+        <router-link to="/run"      class="nav-item">📈 大师分析</router-link>
         <router-link to="/industry-analysis" class="nav-item">🏭 产业分析</router-link>
         <router-link to="/contrarian-analysis" class="nav-item">🔄 逆向对立面</router-link>
         <router-link to="/history"  class="nav-item">📜 分析记录</router-link>
-        <router-link to="/api-keys" class="nav-item">🔑 API Keys</router-link>
+        <router-link to="/message-board" class="nav-item">💬 留言板</router-link>
         <router-link to="/wallet"   class="nav-item">🪙 我的钱包</router-link>
         <router-link to="/contact"  class="nav-item">✉️ 联系我们</router-link>
       </nav>
