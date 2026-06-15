@@ -88,7 +88,7 @@ public class AuthService {
         userMapper.insert(user);
         // 注册完成后自动初始化钱包并赠送新人金币
         walletService.initWallet(user.getId());
-        walletService.grantCoins(user.getId(), 3, "新用户注册赠送");
+        walletService.grantCoins(user.getId(), 38, "新用户注册赠送");
 
         log.info("用户注册成功, userId={}, email={}", user.getId(), user.getUsername());
         return buildAuthResp(user);

@@ -4,6 +4,8 @@ import com.aihedgefund.model.DO.UserWalletDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 用户钱包数据访问
  */
@@ -25,4 +27,9 @@ public interface UserWalletMapper {
      * 增加金币余额（管理员发放）。
      */
     void addBalance(@Param("userId") Long userId, @Param("amount") int amount);
+
+    /**
+     * 查询余额小于指定阈值的所有钱包（每日补齐用）。
+     */
+    List<UserWalletDO> selectBalanceBelow(@Param("threshold") int threshold);
 }

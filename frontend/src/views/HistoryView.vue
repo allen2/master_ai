@@ -95,7 +95,7 @@
           <div class="analyst-list">
             <div v-for="(tickerSignals, agentId) in detail.analyst_signals" :key="agentId" class="analyst-row">
               <div class="analyst-header">
-                <span class="agent-name">{{ agentId }}</span>
+                <span class="agent-name">{{ agentDisplayName(agentId) }}</span>
                 <div class="signal-tags">
                   <el-tag v-for="(sig, ticker) in tickerSignals" :key="ticker"
                     :type="tagType(sig.signal)" size="small" style="margin-left:4px">
@@ -120,6 +120,34 @@
 import { ref, computed, onMounted } from 'vue'
 import { analysisRunsApi } from '../api/index.js'
 import { renderMarkdown } from '../utils/markdown.js'
+
+/** agentId → 中文名 映射（与后端 AgentProfileRegistry + RunView FALLBACK_ANALYST_LIST 保持一致） */
+const AGENT_NAME_MAP = {
+  warren_buffett:          '沃伦·巴菲特',
+  ben_graham:              '本杰明·格雷厄姆',
+  charlie_munger:          '查理·芒格',
+  phil_fisher:             '菲利普·费雪',
+  peter_lynch:             '彼得·林奇',
+  aswath_damodaran:        '阿斯沃斯·达摩达兰',
+  nassim_taleb:            '纳西姆·塔勒布',
+  stanley_druckenmiller:   '斯坦利·德鲁肯米勒',
+  michael_burry:           '迈克尔·伯里',
+  bill_ackman:             '比尔·阿克曼',
+  cathie_wood:             '凯西·伍德',
+  mohnish_pabrai:          '莫尼什·帕布莱',
+  rakesh_jhunjhunwala:     '拉克什·胡杰',
+  fundamentals_analyst:    '基本面分析师',
+  growth_analyst:          '成长分析师',
+  sentiment_analyst:       '情绪分析师',
+  technical_analyst:       '技术分析师',
+  valuation_analyst:       '估值分析师',
+  news_sentiment_analyst:  '新闻情绪分析师',
+}
+
+/** 将 agentId 转为中文显示名，找不到则返回原值 */
+function agentDisplayName(agentId) {
+  return AGENT_NAME_MAP[agentId] || agentId
+}
 
 /** 以 Markdown 报告为产出的研究类分析记录类型（产业分析、逆向对立面分析） */
 const RESEARCH_REPORT_TYPES = ['industry_analysis', 'contrarian_analysis']

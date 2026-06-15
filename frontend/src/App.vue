@@ -9,7 +9,7 @@
       <div class="sidebar-logo">📈 金木智库</div>
       <nav class="sidebar-nav">
         <router-link to="/run"      class="nav-item">📈 大师分析</router-link>
-        <router-link to="/industry-analysis" class="nav-item">🏭 产业分析</router-link>
+        <router-link to="/industry-analysis" class="nav-item">🏭 白毛股神产业分析</router-link>
         <router-link to="/contrarian-analysis" class="nav-item">🔄 逆向对立面</router-link>
         <router-link to="/history"  class="nav-item">📜 分析记录</router-link>
         <router-link to="/message-board" class="nav-item">💬 留言板</router-link>

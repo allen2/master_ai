@@ -58,6 +58,16 @@ export const useRunStore = defineStore('run', () => {
       Object.keys(activities).forEach(k => delete activities[k])
       error.value = null
       running.value = true
+      // 立即初始化所有待分析分析师为 waiting 状态（解决"分析中但进度区空白"问题）
+      // agents 现在是 [{id, name}] 格式，用 name(中文名) 作为显示 key
+      const agentList = data.agents || []
+      for (const agentInfo of agentList) {
+        // 兼容旧格式（纯字符串）和新格式（{id, name} 对象）
+        const displayName = (typeof agentInfo === 'string') ? agentInfo : (agentInfo.name || agentInfo.id)
+        if (!analysts[displayName]) {
+          analysts[displayName] = { status: 'waiting', signals: {} }
+        }
+      }
     } else if (eventName === 'progress') {
       // 更新指定分析师的进度状态
       const { agent, status } = data

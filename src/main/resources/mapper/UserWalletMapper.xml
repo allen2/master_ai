@@ -38,4 +38,11 @@
         WHERE user_id = #{userId}
     </update>
 
+    <!-- 查询余额低于指定阈值的所有钱包（每日补齐用） -->
+    <select id="selectBalanceBelow" resultMap="walletMap">
+        SELECT id, user_id, balance, created_at, updated_at
+        FROM user_wallets
+        WHERE balance &lt; #{threshold}
+    </select>
+
 </mapper>

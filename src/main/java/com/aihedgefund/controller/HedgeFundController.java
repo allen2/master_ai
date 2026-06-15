@@ -24,6 +24,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -83,10 +84,25 @@ public class HedgeFundController {
 
         Executors.newSingleThreadExecutor().submit(() -> {
             try {
-                // start 事件
+                // start 事件（包含待分析的分析师列表，前端用于立即初始化 UI）
                 Map<String, Object> startData = new HashMap<>();
                 startData.put("status", "started");
                 startData.put("tickers", req.getTickers());
+                List<String> selectedIds = req.getSelectedAnalysts();
+                List<AgentProfile> agentProfiles;
+                if (selectedIds == null || selectedIds.isEmpty()) {
+                    agentProfiles = profileRegistry.listAll();
+                } else {
+                    agentProfiles = selectedIds.stream()
+                            .map(id -> profileRegistry.getByAgentId(id).orElse(null))
+                            .filter(p -> p != null)
+                            .toList();
+                }
+                // 传递 {id, name} 映射，让前端初始化时直接显示中文名
+                List<Map<String, String>> agentsList = agentProfiles.stream()
+                        .map(p -> { Map<String, String> m = new LinkedHashMap<>(); m.put("id", p.getAgentId()); m.put("name", p.getDisplayName()); return m; })
+                        .toList();
+                startData.put("agents", agentsList);
                 emitter.send(SseEmitter.event().name("start").data(startData));
 
                 // 执行工作流（编排器内部推送 progress 事件）

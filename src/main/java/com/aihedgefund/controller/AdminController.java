@@ -130,4 +130,25 @@ public class AdminController {
         messageBoardService.deleteByAdmin(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * 手动触发每日金币补齐（方便测试，无需等到凌晨 2:00）。
+     * 将余额低于阈值的用户补齐到阈值（默认 3 枚）。
+     *
+     * <p>调用示例：
+     * <pre>
+     * curl -X POST http://localhost:8000/admin/coins/daily-topup \
+     *   -H "X-Admin-Token: mumu-admin-2024"
+     * </pre>
+     * </p>
+     */
+    @PostMapping("/coins/daily-topup")
+    public Map<String, Object> dailyTopup() {
+        log.info("管理员手动触发每日金币补齐");
+        int count = walletService.dailyTopup();
+        Map<String, Object> result = new HashMap<>();
+        result.put("topupCount", count);
+        result.put("message", count > 0 ? "补齐完成，共 " + count + " 位用户" : "无需补齐");
+        return result;
+    }
 }

@@ -36,7 +36,7 @@
       show-icon :closable="false" style="margin-top:12px" />
 
     <!-- 结果区：两列 -->
-    <div class="results-grid" v-if="hasResults">
+    <div class="results-grid" v-if="hasResults || runStore.running">
       <!-- 左：分析师进度 -->
       <el-card shadow="never">
         <template #header>分析师进度</template>

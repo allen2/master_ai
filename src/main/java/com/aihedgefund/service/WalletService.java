@@ -9,6 +9,7 @@ import com.aihedgefund.model.resp.CoinTransactionResp;
 import com.aihedgefund.model.resp.WalletResp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 钱包业务逻辑：余额查询、金币发放（管理员）、金币消耗（分析）。
+ * 钱包业务逻辑：余额查询、金币发放（管理员）、金币消耗（分析）、每日补齐。
  */
 @Service
 public class WalletService {
@@ -25,6 +26,10 @@ public class WalletService {
 
     private static final String TYPE_GRANT  = "GRANT";
     private static final String TYPE_DEDUCT = "DEDUCT";
+
+    /** 每日补齐阈值：余额低于此值时补齐到该值 */
+    @Value("${wallet.daily-topup-threshold:3}")
+    private int dailyTopupThreshold;
 
     private final UserWalletMapper walletMapper;
     private final CoinTransactionMapper txMapper;
@@ -147,5 +152,38 @@ public class WalletService {
         resp.setBalanceAfter(tx.getBalanceAfter());
         resp.setCreatedAt(tx.getCreatedAt());
         return resp;
+    }
+
+    /**
+     * 每日补齐：将余额低于阈值的用户补齐到阈值。
+     * 由定时任务每天凌晨自动调用，也可手动触发。
+     *
+     * @return 补齐的用户数量
+     */
+    @Transactional
+    public int dailyTopup() {
+        List<UserWalletDO> wallets = walletMapper.selectBalanceBelow(dailyTopupThreshold);
+        if (wallets.isEmpty()) {
+            log.info("每日补齐：无需补齐的用户");
+            return 0;
+        }
+
+        int count = 0;
+        for (UserWalletDO wallet : wallets) {
+            int shortfall = dailyTopupThreshold - wallet.getBalance();
+            walletMapper.addBalance(wallet.getUserId(), shortfall);
+
+            UserWalletDO updated = walletMapper.selectByUserId(wallet.getUserId());
+            int balanceAfter = updated != null ? updated.getBalance() : dailyTopupThreshold;
+
+            CoinTransactionDO tx = buildTx(wallet.getUserId(), shortfall, TYPE_GRANT,
+                    "每日补齐（" + wallet.getBalance() + "→" + dailyTopupThreshold + "）", balanceAfter);
+            txMapper.insert(tx);
+
+            log.info("每日补齐: userId={}, {}→{}, +{}", wallet.getUserId(), wallet.getBalance(), balanceAfter, shortfall);
+            count++;
+        }
+        log.info("每日补齐完成，共补齐 {} 位用户", count);
+        return count;
     }
 }
