@@ -1,6 +1,8 @@
 package com.aihedgefund.controller;
 
+import com.aihedgefund.mapper.MessageBoardMapper;
 import com.aihedgefund.mapper.UserMapper;
+import com.aihedgefund.model.DO.MessageBoardDO;
 import com.aihedgefund.model.DO.UserDO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +39,9 @@ class AdminControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MessageBoardMapper messageBoardMapper;
 
     /**
      * 缺少 X-Admin-Token 时应返回 401。
@@ -124,6 +131,34 @@ class AdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * 管理员携带 X-Admin-Token 删除任意留言：留言被标记为已删除。
+     */
+    @Test
+    void deleteMessage_withAdminToken_softDeletes() throws Exception {
+        UserDO user = createUser("admin-msg-delete@example.com");
+        MessageBoardDO message = new MessageBoardDO();
+        message.setUserId(user.getId());
+        message.setContent("待管理员删除");
+        messageBoardMapper.insert(message);
+
+        mockMvc.perform(delete("/admin/message-board/" + message.getId())
+                        .header(ADMIN_TOKEN_HEADER, ADMIN_TOKEN))
+                .andExpect(status().isNoContent());
+
+        MessageBoardDO deleted = messageBoardMapper.selectById(message.getId());
+        assertThat(deleted.getDeleted()).isEqualTo(1);
+    }
+
+    /**
+     * 缺少 X-Admin-Token 时应返回 401。
+     */
+    @Test
+    void deleteMessage_missingAdminToken_returns401() throws Exception {
+        mockMvc.perform(delete("/admin/message-board/1"))
+                .andExpect(status().isUnauthorized());
     }
 
     /**

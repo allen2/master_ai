@@ -5,11 +5,15 @@ import com.aihedgefund.mapper.UserMapper;
 import com.aihedgefund.model.DO.UserDO;
 import com.aihedgefund.model.req.GrantCoinsReq;
 import com.aihedgefund.model.resp.WalletResp;
+import com.aihedgefund.service.MessageBoardService;
 import com.aihedgefund.service.WalletService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,10 +53,13 @@ public class AdminController {
 
     private final WalletService walletService;
     private final UserMapper userMapper;
+    private final MessageBoardService messageBoardService;
 
-    public AdminController(WalletService walletService, UserMapper userMapper) {
+    public AdminController(WalletService walletService, UserMapper userMapper,
+            MessageBoardService messageBoardService) {
         this.walletService = walletService;
         this.userMapper = userMapper;
+        this.messageBoardService = messageBoardService;
     }
 
     /**
@@ -112,5 +119,15 @@ public class AdminController {
             row.put("balance", wallet.getBalance());
             return row;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 管理员删除任意留言（逻辑删除）。
+     */
+    @DeleteMapping("/message-board/{id}")
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
+        log.info("管理员删除留言, id={}", id);
+        messageBoardService.deleteByAdmin(id);
+        return ResponseEntity.noContent().build();
     }
 }
