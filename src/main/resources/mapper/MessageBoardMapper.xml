@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aihedgefund.mapper.MessageBoardMapper">
+
+    <resultMap id="MessageBoardResultMap" type="com.aihedgefund.model.DO.MessageBoardDO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="deleted" column="deleted"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="nickname" column="nickname"/>
+        <result property="likeRecordId" column="like_record_id"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO message_board (user_id, content)
+        VALUES (#{userId}, #{content})
+    </insert>
+
+    <select id="selectById" resultMap="MessageBoardResultMap">
+        SELECT id, user_id, content, like_count, deleted, created_at, updated_at
+        FROM message_board
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectPage" resultMap="MessageBoardResultMap">
+        SELECT mb.id, mb.user_id, mb.content, mb.like_count, mb.deleted, mb.created_at, mb.updated_at,
+               COALESCE(u.nickname, u.username) AS nickname,
+               mbl.id AS like_record_id
+        FROM message_board mb
+        JOIN users u ON u.id = mb.user_id
+        LEFT JOIN message_board_likes mbl
+               ON mbl.message_id = mb.id AND mbl.user_id = #{currentUserId}
+        WHERE mb.deleted = 0
+        ORDER BY mb.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM message_board WHERE deleted = 0
+    </select>
+
+    <update id="softDeleteById">
+        UPDATE message_board
+        SET deleted = 1, updated_at = datetime('now')
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="updateLikeCount">
+        UPDATE message_board
+        SET like_count = like_count + #{delta}, updated_at = datetime('now')
+        WHERE id = #{id}
+    </update>
+
+</mapper>
